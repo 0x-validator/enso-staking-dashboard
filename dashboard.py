@@ -283,11 +283,12 @@ with tab_overview:
         line=dict(color="#2563eb", width=2),
         name="Cumulative Net Staked",
     ))
+    fig_cum.update_traces(hovertemplate="%{x|%Y-%m-%d}<br>%{y:,.0f} ENSO<extra></extra>")
     fig_cum.update_layout(
         title="Cumulative Net Staked ENSO Over Time",
         xaxis_title="Date", yaxis_title="ENSO Tokens",
-        yaxis_tickformat=",", height=420,
-        hovermode="x unified",
+        yaxis_tickformat=",.", yaxis_separatethousands=True,
+        height=420, hovermode="x unified",
     )
     st.plotly_chart(fig_cum, use_container_width=True)
 
@@ -309,9 +310,10 @@ with tab_overview:
         title="Daily Staking & Unstaking Volume",
         labels={"amount": "ENSO Tokens", "date": "Date"},
     )
+    fig_vol.update_traces(hovertemplate="%{x|%Y-%m-%d}<br>%{y:,.0f} ENSO<extra></extra>")
     fig_vol.update_layout(
-        yaxis_tickformat=",", height=350,
-        barmode="relative", hovermode="x unified",
+        yaxis_tickformat=",.", yaxis_separatethousands=True,
+        height=350, barmode="relative", hovermode="x unified",
         legend=dict(orientation="h", yanchor="bottom", y=1.02),
     )
     st.plotly_chart(fig_vol, use_container_width=True)
@@ -345,6 +347,7 @@ with tab_stakers:
         display_df = owner_df.head(30).copy()
         display_df["share"] = (display_df["total_staked"] / total_staked * 100).round(2)
         display_df["address"] = display_df["owner"].apply(short_addr)
+        display_df["total_staked"] = display_df["total_staked"].apply(lambda x: f"{x:,.0f}")
 
         st.dataframe(
             display_df[[
@@ -370,8 +373,11 @@ with tab_stakers:
     filtered = owner_df.copy()
     if search:
         filtered = filtered[filtered["owner"].str.lower().str.contains(search.lower())]
+    fmt_filtered = filtered.copy()
+    fmt_filtered["total_staked"] = fmt_filtered["total_staked"].apply(lambda x: f"{x:,.0f}")
+    fmt_filtered["total_stake_weight"] = fmt_filtered["total_stake_weight"].apply(lambda x: f"{x:,.0f}")
     st.dataframe(
-        filtered[[
+        fmt_filtered[[
             "rank", "owner", "total_staked", "total_stake_weight",
             "num_positions", "earliest_remaining", "latest_remaining",
         ]].rename(columns={
@@ -409,9 +415,12 @@ with tab_positions:
     show_df["owner_short"] = show_df["owner"].apply(
         lambda x: short_addr(x) if x else "Unknown"
     )
+    fmt_show = show_df.copy()
+    fmt_show["net_deposited"] = fmt_show["net_deposited"].apply(lambda x: f"{x:,.0f}")
+    fmt_show["stake"] = fmt_show["stake"].apply(lambda x: f"{x:,.0f}")
 
     st.dataframe(
-        show_df[[
+        fmt_show[[
             "position_id", "owner_short", "net_deposited", "stake",
             "validator", "expiry_utc", "unlock_remaining", "is_locked",
         ]].rename(columns={
@@ -452,8 +461,13 @@ with tab_unlocks:
             labels={"unlock_month": "Month", "tokens_unlocking": "ENSO Tokens"},
             color_discrete_sequence=["#8b5cf6"],
         )
-        fig_unlock.update_traces(texttemplate="%{text} pos", textposition="outside")
-        fig_unlock.update_layout(yaxis_tickformat=",", height=420)
+        fig_unlock.update_traces(
+            texttemplate="%{text} pos", textposition="outside",
+            hovertemplate="%{x}<br>%{y:,.0f} ENSO<br>%{text} positions<extra></extra>",
+        )
+        fig_unlock.update_layout(
+            yaxis_tickformat=",.", yaxis_separatethousands=True, height=420,
+        )
         st.plotly_chart(fig_unlock, use_container_width=True)
 
         # Cumulative unlock curve
@@ -473,10 +487,11 @@ with tab_unlocks:
             y=total_staked, line_dash="dash", line_color="grey",
             annotation_text=f"Total Staked: {total_staked:,.0f}",
         )
+        fig_curve.update_traces(hovertemplate="%{x|%Y-%m-%d}<br>%{y:,.0f} ENSO<extra></extra>")
         fig_curve.update_layout(
             title="Cumulative Token Unlock Curve",
             xaxis_title="Date", yaxis_title="ENSO Tokens (Unlocked)",
-            yaxis_tickformat=",", height=420,
+            yaxis_tickformat=",.", yaxis_separatethousands=True, height=420,
         )
         st.plotly_chart(fig_curve, use_container_width=True)
 

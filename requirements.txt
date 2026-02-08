@@ -1,6 +1,5 @@
-requests
-pandas
-matplotlib
-python-dotenv
-streamlit
-plotly
+streamlit>=1.40,<2
+plotly>=5.18
+pandas>=2.0
+requests>=2.31
+python-dotenv>=1.0

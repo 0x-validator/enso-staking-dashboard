@@ -2,6 +2,5 @@ requests
 pandas
 matplotlib
 python-dotenv
-web3
 streamlit
 plotly

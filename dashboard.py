@@ -17,7 +17,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 import requests
 import streamlit as st
-from web3 import Web3
 
 # ── Page config ──────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -31,12 +30,13 @@ CONTRACT = "0x22Ad2a46d317C5eDF6c01fea16d4399C912E9A01"
 DECIMALS = 18
 BASE_URL = "https://api.etherscan.io/v2/api"
 
-TOPIC_POSITION_CREATED = "0x" + Web3.keccak(text="PositionCreated(uint256,uint64,bytes32)").hex()
-TOPIC_FUNDS_DEPOSITED  = "0x" + Web3.keccak(text="FundsDeposited(uint256,uint256,uint256)").hex()
-TOPIC_FUNDS_WITHDRAWN  = "0x" + Web3.keccak(text="FundsWithdrawn(uint256,uint256)").hex()
-TOPIC_REWARDS_ISSUED   = "0x" + Web3.keccak(text="RewardsIssued(bytes32,uint256)").hex()
-TOPIC_REWARDS_WITHDRAWN = "0x" + Web3.keccak(text="RewardsWithdrawn(address,uint256)").hex()
-TOPIC_TRANSFER = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
+# Precomputed keccak256 event topic hashes (removes web3 dependency)
+TOPIC_POSITION_CREATED  = "0x34e49ed13d7eb52832aff120e7482f7b6e7e0328254ca90ee5834a845a87c3b2"
+TOPIC_FUNDS_DEPOSITED   = "0xed2de103da084463a1b2895568d352fd796dfd1d033c0e8ee9fabe73a6715389"
+TOPIC_FUNDS_WITHDRAWN   = "0xd66662c0ded9e58fd31d5e44944bcfd07ffc15e6927ecc1382e7941cb7bd24c4"
+TOPIC_REWARDS_ISSUED    = "0x0c9657b4fcab07e36b228d7add08afd28c23c3e216910a78c6f12b89d4f05397"
+TOPIC_REWARDS_WITHDRAWN = "0x8a43c4352486ec339f487f64af78ca5cbf06cd47833f073d3baf3a193e503161"
+TOPIC_TRANSFER          = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
 ZERO_TOPIC = "0x" + "0" * 64
 
 
@@ -51,7 +51,7 @@ def decode_word(data: str, index: int) -> int:
 
 
 def addr_from_topic(topic: str) -> str:
-    return Web3.to_checksum_address("0x" + topic[-40:])
+    return "0x" + topic[-40:]
 
 
 def format_unlock(expiry_ts: int, now: int) -> str:
@@ -222,7 +222,10 @@ with st.sidebar:
     st.markdown(f"[View on Etherscan]({etherscan_link(CONTRACT)})")
     st.divider()
 
-    api_key = os.getenv("ETHERSCAN_API_KEY", "")
+    # Support both Streamlit Cloud secrets and local .env
+    api_key = st.secrets.get("ETHERSCAN_API_KEY", "") if hasattr(st, "secrets") else ""
+    if not api_key:
+        api_key = os.getenv("ETHERSCAN_API_KEY", "")
     api_key_input = st.text_input(
         "Etherscan API Key",
         value=api_key,

@@ -222,18 +222,13 @@ with st.sidebar:
     st.markdown(f"[View on Etherscan]({etherscan_link(CONTRACT)})")
     st.divider()
 
-    # Support both Streamlit Cloud secrets and local .env
-    api_key = st.secrets.get("ETHERSCAN_API_KEY", "") if hasattr(st, "secrets") else ""
-    if not api_key:
-        api_key = os.getenv("ETHERSCAN_API_KEY", "")
-    api_key_input = st.text_input(
-        "Etherscan API Key",
-        value=api_key,
-        type="password",
-        help="Required to fetch on-chain data. Get one free at etherscan.io.",
-    )
+    # Load API key from Streamlit secrets or environment
+    try:
+        api_key_input = st.secrets["ETHERSCAN_API_KEY"]
+    except (KeyError, FileNotFoundError):
+        api_key_input = os.getenv("ETHERSCAN_API_KEY", "")
     if not api_key_input:
-        st.warning("Enter your Etherscan API key to load data.")
+        st.warning("Etherscan API key not configured.")
         st.stop()
 
     refresh = st.button("🔄 Refresh data", use_container_width=True)
